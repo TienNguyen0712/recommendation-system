@@ -18,9 +18,9 @@ Thu thập và xử lý dữ liệu -> Tạo ứng viên -> Xếp hạng -> Lọ
 
 ---
 
-## Dữ liệu 
+## 1. Dữ liệu 
 
-### Các loại dữ liệu đầu vào trong hệ thống gợi ý: 
+### 1.1. Các loại dữ liệu đầu vào trong hệ thống gợi ý: 
 
 - **Explicit Feedback (Hiếm xảy ra hơn)**: Dữ liệu mà người dùng tự nguyên cung cấp. Rõ ràng, tin cậy nhưng rất khó để thu thập _(Rating, Like/Dislike, Review, Rakinh)_
 - **Implicit Feedback**: Dữ liệu mà người dùng không tự nguyên cung cấp. Mà phải thu thập từ các trang web _(Số lần truy cập, Lượt click, Lượt xem)_
@@ -29,7 +29,7 @@ Với mỗi bộ loại dữ liệu khác nhau ta lại càng sử dujgn các th
 - Explitcit: SVD, NMF, SVD++
 - Implitcit: ALS, BPR, NCF
 
-### Vấn đề cốt lõi của Implicit là: 
+### 1.2. Vấn đề cốt lõi của Implicit là: 
 - Khi user click hay không click cũng không thể xác định được là do không thích hay không thấy
 - Đã mua rồi không càn mua lại
 - Thấy nhưng không có thời gian
@@ -38,7 +38,7 @@ Do vậy để xử lý những điều trên ta có thể thực hiện các ph
 
 - ALS, BRP, Negative Sampling
 
-### Các loại Implicit phổ biến
+### 1.3. Các loại Implicit phổ biến
 
 | Signal | Strenghit | Ghi chú |
 | ------- | ------- | ------- | 
@@ -49,9 +49,7 @@ Do vậy để xử lý những điều trên ta có thể thực hiện các ph
 | Impression | Yếu | Chỉ biết user đã thấy | 
 | Search | Mạnh | Intent signal rõ |
 
----
-
-### Ma trận user-item 
+### 1.4. Ma trận user-item 
 
 Là một ma trận E có kịch thước (U X I)
 - U: Số user, I: Số item
@@ -61,9 +59,7 @@ Là một ma trận E có kịch thước (U X I)
 Đặc điểm: 
 - Độ thưa - Mhỏ 
 
----
-
-### Phân loại features: 
+### 1.5. Phân loại features: 
 
 **Theo user**
 
@@ -112,11 +108,11 @@ Các kỹ thuật Features Engineering bao gồm
 
 ---
 
-## Lựa chọn ứng viên 
+## 2. Lựa chọn ứng viên 
 
 Phần này là phần cốt lõi cũng như là kiến trúc trọng tâm cho Hệ thống gợi ý, phần này được chia làm ba lớp kỹ thuật tăng dần theo độ phức tạp 
 
-### Tầng 1: Collaborative Filtering (CF)
+### 2.1. Tầng 1: Collaborative Filtering (CF)
 
 - **User-Based CF:** Tìm những user có lịch sử rating trông gioosngh với user hiện tại -> Dùng rating của họ để dự đoán item chưa xem
   - Cách tính sẽ theo Corr, hoặc cosin similar
