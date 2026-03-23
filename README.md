@@ -114,7 +114,7 @@ Phần này là phần cốt lõi cũng như là kiến trúc trọng tâm cho H
 
 ### 2.1. Tầng 1: Collaborative Filtering (CF)
 
-- **User-Based CF:** Tìm những user có lịch sử rating trông gioosngh với user hiện tại -> Dùng rating của họ để dự đoán item chưa xem
+- **User-Based CF:** Tìm những user có lịch sử rating trông giống với user hiện tại -> Dùng rating của họ để dự đoán item chưa xem
   - Cách tính sẽ theo Corr, hoặc cosin similar
   - Nhược điểm: Nặng bộ nhớ khi dữ liệu lớn - Kém chính xác - Khi có user mới hoàn toàn thì khoogn thể tính chính xác
 - **Item-Based CF:** Thaty vì nói ai giống user này thì người ta nói phim nào giống phim A. Oỏn định hơn user vì item ít thay đổi hơn
