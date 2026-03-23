@@ -56,8 +56,30 @@ Là một ma trận E có kịch thước (U X I)
 - R[u][i]: rating của user u với item i
 - 0 hoặc NaN = chưa tương tác
 
-Đặc điểm: 
-- Độ thưa - Mhỏ 
+```
+         Inception  Interstellar  Avatar  Tenet  Dune
+An           5           4          0       3      0
+Bình         4           5          0       4      0
+Chi          0           0          5       0      4
+Dũng         3           0          4       0      5
+```
+
+### Đặc điểm
+
+#### Sparsity (độ thưa)
+
+```python
+sparsity = 1 - (n_interactions / (n_users * n_items))
+# Thực tế: sparsity thường > 99%
+# Netflix: ~99.8%   Amazon: ~99.9%
+```
+
+#### Scalability
+```
+Netflix:  ~500K users × 17K movies  → 8.5B cells
+Spotify:  ~400M users × 80M songs   → 32T cells  (không thể lưu toàn bộ!)
+```
+→ Phải dùng sparse matrix format (CSR/CSC).
 
 ### 1.5. Phân loại features: 
 
@@ -70,6 +92,12 @@ Preference:     genre preference, price range, brand affinity
 Temporal:       time of day, day of week, recency of activity
 ```
 
+```
+r_u = vector rating của user u
+→ Dùng để tìm user tương tự
+→ User-based CF
+```
+
 **Theo item**
 
 ```
@@ -77,6 +105,12 @@ Content:        title, description, category, tags, brand
 Metadata:       price, release date, popularity, avg rating
 Visual:         thumbnail embedding (CNN), color palette
 Textual:        TF-IDF, BERT embedding của description
+```
+
+```
+r_i = vector rating của item i
+→ Dùng để tìm item tương tự
+→ Item-based CF
 ```
 
 **Theo context**
