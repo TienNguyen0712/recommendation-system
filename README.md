@@ -170,7 +170,7 @@ Tại sao cần BRP:
 
 ### 2.2. Tầng 2: Content-Based Filtering
 
-#### 2.2.1 TF-IDF
+#### 2.2.1. TF-IDF
 
 Biểu diễn item (phim, sản phẩm, bài viết) thành vector số dựa trên nội dung text.
 Tìm item tương tự = tìm vector gần nhau.
@@ -201,7 +201,7 @@ TF-IDF(t, d) = TF(t, d) × IDF(t)
 > TF-IDF tốt với keyword matching. Embedding tốt với semantic matching.
 > Trong production: thường dùng embedding, TF-IDF làm fallback hoặc feature bổ sung.
 
-#### 2.2.2 Embedding Similarity
+#### 2.2.2. Embedding Similarity
 Biểu diễn user và item thành dense vector trong không gian k chiều. Items/users tương tự nhau → vector gần nhau trong không gian đó.
 - Các loại embedding
 ```python
