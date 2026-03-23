@@ -202,6 +202,7 @@ TF-IDF(t, d) = TF(t, d) × IDF(t)
 > Trong production: thường dùng embedding, TF-IDF làm fallback hoặc feature bổ sung.
 
 #### 2.2.2. Embedding Similarity
+
 Biểu diễn user và item thành dense vector trong không gian k chiều. Items/users tương tự nhau → vector gần nhau trong không gian đó.
 - Các loại embedding
 ```python
@@ -279,13 +280,9 @@ User Embedding × Item Embedding^T
 > User embedding = trung bình item embeddings đã tương tác → giải quyết user cold-start một phần.
 > Kết hợp content embedding + ID embedding = tốt nhất trong production.
 
-### Tầng 3: Two-Tower + ANN Search 
+### 2.3. Tầng 3: Two-Tower + ANN Search 
 
-- **Two Tower Model:**
-
-# Two-Tower Model
-
-## Kiến trúc tổng quan
+#### 2.3.1. **Two Tower Model:**
 
 ```
 User features                    Item features
@@ -301,102 +298,6 @@ User features                    Item features
 
 Hai tower hoàn toàn tách biệt → có thể precompute item embeddings offline.
 
-## Code (PyTorch)
-
-```python
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-class TwoTowerModel(nn.Module):
-    def __init__(self, num_users, num_items, user_feat_dim,
-                 item_feat_dim, emb_dim=64):
-        super().__init__()
-
-        # User tower
-        self.user_id_emb = nn.Embedding(num_users, 32)
-        self.user_tower = nn.Sequential(
-            nn.Linear(32 + user_feat_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, emb_dim)
-        )
-
-        # Item tower
-        self.item_id_emb = nn.Embedding(num_items, 32)
-        self.item_tower = nn.Sequential(
-            nn.Linear(32 + item_feat_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, emb_dim)
-        )
-
-    def user_encode(self, user_id, user_feats):
-        uid_emb = self.user_id_emb(user_id)
-        x = torch.cat([uid_emb, user_feats], dim=-1)
-        return F.normalize(self.user_tower(x), dim=-1)
-
-    def item_encode(self, item_id, item_feats):
-        iid_emb = self.item_id_emb(item_id)
-        x = torch.cat([iid_emb, item_feats], dim=-1)
-        return F.normalize(self.item_tower(x), dim=-1)
-
-    def forward(self, user_id, user_feats, item_id, item_feats):
-        u_emb = self.user_encode(user_id, user_feats)
-        i_emb = self.item_encode(item_id, item_feats)
-        return (u_emb * i_emb).sum(dim=-1)  # dot product score
-```
-
-## Training: In-batch Negative Sampling
-
-```python
-def train_step(model, batch, temperature=0.05):
-    user_id, user_feats, item_id, item_feats = batch
-    # batch_size = B
-
-    u_emb = model.user_encode(user_id, user_feats)   # (B, d)
-    i_emb = model.item_encode(item_id, item_feats)   # (B, d)
-
-    # Similarity matrix: mỗi user vs TẤT CẢ items trong batch
-    logits = torch.matmul(u_emb, i_emb.T) / temperature  # (B, B)
-
-    # Diagonal = positive pairs, off-diagonal = in-batch negatives
-    labels = torch.arange(len(user_id))
-    loss = F.cross_entropy(logits, labels)
-    return loss
-```
-
-## Serving: ANN Search với FAISS
-
-```python
-import faiss
-import numpy as np
-
-# --- Offline: index tất cả item embeddings ---
-model.eval()
-all_item_embs = []
-for item_id, item_feats in item_dataloader:
-    emb = model.item_encode(item_id, item_feats)
-    all_item_embs.append(emb.detach().numpy())
-
-all_item_embs = np.vstack(all_item_embs).astype('float32')  # (N_items, d)
-
-# Build FAISS index (IVF + flat, tốt cho production)
-d = all_item_embs.shape[1]
-index = faiss.IndexFlatIP(d)         # Inner Product (= cosine nếu normalized)
-index.add(all_item_embs)
-faiss.write_index(index, "item_index.faiss")
-
-# --- Online: query top-K cho user ---
-index = faiss.read_index("item_index.faiss")
-
-user_emb = model.user_encode(user_id, user_feats)
-user_emb = user_emb.detach().numpy().astype('float32')
-
-scores, item_indices = index.search(user_emb, k=100)  # Top-100 candidates
-# → chuyển sang Ranking stage
-```
-
-## So sánh với CF
-
 | | Matrix Factorization | Two-Tower |
 |---|---|---|
 | Input features | Chỉ ID | ID + bất kỳ features nào |
@@ -405,94 +306,22 @@ scores, item_indices = index.search(user_emb, k=100)  # Top-100 candidates
 | Complexity | Đơn giản | Phức tạp hơn |
 | Dùng ở đâu | Baseline | YouTube, Pinterest, Airbnb |
 
-## Paper gốc
-- **YouTube DNN (2016):** "Deep Neural Networks for YouTube Recommendations"
-- Là paper đầu tiên popularize two-tower cho RecSys ở scale lớn
-
-## Ghi nhớ
 > Two-Tower = candidate generation engine hiện đại nhất.
 > User tower online (real-time), Item tower offline (precomputed).
 > Kết hợp với FAISS/HNSW để tìm Top-K trong milliseconds với hàng triệu items.
 
-- **ANN Search:**
+#### 2.3.2. **ANN Search:**
 
-# Approximate Nearest Neighbor (ANN) Search
-
-## Vấn đề
-
-Với 10M items, mỗi item là vector 64 chiều:
+(Vấn đề) Với 10M items, mỗi item là vector 64 chiều:
 - Brute-force: 10M × 64 phép nhân → ~50ms/query → quá chậm cho production
 - ANN: chấp nhận recall@100 ≈ 95% để đổi lấy tốc độ < 5ms
 
-## Các thuật toán chính
+**Các thuật toán chính**
+  - FAISS (Facebook AI Similarity Search)
+  - HNSW (Hierarchical Navigable Small World)
+  - ScaNN (Google)
 
-### 1. FAISS (Facebook AI Similarity Search)
-
-```python
-import faiss
-import numpy as np
-
-d = 64          # embedding dimension
-n = 1_000_000   # số items
-
-embeddings = np.random.randn(n, d).astype('float32')
-
-# --- IVF (Inverted File Index) ---
-# Chia không gian thành n_clusters cụm, chỉ search trong cụm gần nhất
-n_clusters = 1000
-quantizer = faiss.IndexFlatIP(d)
-index = faiss.IndexIVFFlat(quantizer, d, n_clusters, faiss.METRIC_INNER_PRODUCT)
-index.train(embeddings)   # học cluster centroids
-index.add(embeddings)
-index.nprobe = 50         # search trong 50 cụm gần nhất (tradeoff recall vs speed)
-
-# Query
-query = np.random.randn(1, d).astype('float32')
-scores, indices = index.search(query, k=100)
-
-# --- IVF + PQ (Product Quantization) — tiết kiệm memory ---
-index = faiss.IndexIVFPQ(quantizer, d, n_clusters, 8, 8)
-# 8 sub-vectors, mỗi sub-vector quantized thành 8 bits → compress 32x
-```
-
-### 2. HNSW (Hierarchical Navigable Small World)
-
-```python
-# Dùng thư viện hnswlib
-import hnswlib
-
-dim = 64
-num_elements = 1_000_000
-
-# Build index
-p = hnswlib.Index(space='cosine', dim=dim)
-p.init_index(max_elements=num_elements, ef_construction=200, M=16)
-p.add_items(embeddings)
-p.set_ef(50)   # ef khi query, càng cao càng chính xác (và chậm hơn)
-
-# Query
-labels, distances = p.knn_query(query, k=100)
-
-# Save/load
-p.save_index("hnsw_index.bin")
-p.load_index("hnsw_index.bin")
-```
-
-### 3. ScaNN (Google)
-
-```python
-import scann
-
-searcher = scann.scann_ops_pybind.builder(embeddings, 10, "dot_product") \
-    .tree(num_leaves=1000, num_leaves_to_search=100) \
-    .score_ah(2, anisotropic_quantization_threshold=0.2) \
-    .reorder(100) \
-    .build()
-
-neighbors, distances = searcher.search_batched(queries)
-```
-
-## So sánh
+**So sánh**
 
 | | FAISS IVF | HNSW | ScaNN |
 |---|---|---|---|
@@ -503,7 +332,7 @@ neighbors, distances = searcher.search_batched(queries)
 | Dễ dùng | Trung bình | Dễ | Trung bình |
 | Dùng ở đâu | Meta, nhiều nơi | Weaviate, Vespa | Google |
 
-## Vector Databases (production)
+**Vector Databases (production)**
 
 Khi cần managed solution với filter + update real-time:
 
@@ -514,8 +343,6 @@ Khi cần managed solution với filter + update real-time:
 | Qdrant | Rust-based, nhanh, open-source |
 | Milvus | Scale lớn, Alibaba |
 
-## Tradeoff cần nhớ
-
 ```
 Recall cao  ←────────────────────→  Latency thấp
 (nprobe lớn, ef lớn)              (nprobe nhỏ, ef nhỏ)
@@ -523,7 +350,6 @@ Recall cao  ←────────────────────→  
 Thường target: recall@100 ≥ 95%, latency ≤ 10ms
 ```
 
-## Ghi nhớ
 > ANN là cầu nối giữa Two-Tower model và production serving.
 > HNSW = chất lượng tốt nhất. FAISS = linh hoạt nhất, GPU support.
 > Vector DB = khi cần filter theo metadata + real-time update.
