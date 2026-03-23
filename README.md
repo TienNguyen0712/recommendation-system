@@ -53,7 +53,7 @@ Do vậy để xử lý những điều trên ta có thể thực hiện các ph
 
 Là một ma trận E có kịch thước (U X I)
 - U: Số user, I: Số item
-- R[u][i[ơ: rating của user u với item i
+- R[u][i]: rating của user u với item i
 - 0 hoặc NaN = chưa tương tác
 
 Đặc điểm: 
