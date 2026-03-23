@@ -279,8 +279,6 @@ User Embedding × Item Embedding^T
 > User embedding = trung bình item embeddings đã tương tác → giải quyết user cold-start một phần.
 > Kết hợp content embedding + ID embedding = tốt nhất trong production.
 
-- **Consin Similarity:**
-
 ### Tầng 3: Two-Tower + ANN Search 
 
 - **Two Tower Model:**
