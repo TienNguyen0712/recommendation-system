@@ -136,28 +136,22 @@ Tại sao cần BRP:
 
 ### Tầng 2: Content-Based Filtering
 
-- **TF-IDF/BM25:**
-
-**Ý tưởng cốt lõi**: Biểu diễn item (phim, sản phẩm, bài viết) thành vector số dựa trên nội dung text.
+- **TF-IDF/BM25:** Biểu diễn item (phim, sản phẩm, bài viết) thành vector số dựa trên nội dung text.
 Tìm item tương tự = tìm vector gần nhau.
+  - Từ xuất hiện nhiều trong toàn corpus (the, is, a) → IDF thấp → ít quan trọng
+  - Từ xuất hiện ít nhưng đặc trưng (Nolan, sci-fi) → IDF cao → quan trọng
 
-**Công thức:**
+- **Công thức:**
+```
 - TF (Term Frequency)
-```
 TF(t, d) = số lần từ t xuất hiện trong document d / tổng số từ trong d
-```
+
 - IDF (Inverse Document Frequency)
-```
 IDF(t) = log(N / df_t)
 N   = tổng số documents
 df_t = số documents chứa từ t
-```
-
-- Từ xuất hiện nhiều trong toàn corpus (the, is, a) → IDF thấp → ít quan trọng
-- Từ xuất hiện ít nhưng đặc trưng (Nolan, sci-fi) → IDF cao → quan trọng
 
 - TF-IDF
-```
 TF-IDF(t, d) = TF(t, d) × IDF(t)
 ```
 
@@ -167,10 +161,6 @@ TF-IDF(t, d) = TF(t, d) × IDF(t)
 | Giải quyết cold-start cho item mới | Vocabulary mismatch (synonym) |
 | Dễ interpret | Không hiểu ngữ nghĩa sâu |
 | Nhanh, nhẹ | Kém hơn embedding với large corpus |
-
-**Khi nào dùng TF-IDF vs Embedding**
-- **TF-IDF:** dataset nhỏ, cần explainability, item có nhiều text
-- **Embedding (BERT, Sentence-BERT):** cần hiểu ngữ nghĩa, synonym, đa ngôn ngữ
 
 > TF-IDF tốt với keyword matching. Embedding tốt với semantic matching.
 > Trong production: thường dùng embedding, TF-IDF làm fallback hoặc feature bổ sung.
